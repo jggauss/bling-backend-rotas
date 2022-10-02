@@ -1,0 +1,3 @@
+ALTER TABLE tabelalojaprodutos ADD CONSTRAINT FK_PRODUTOS foreign key (produtoid) REFERENCES produtos(codigo) ON DELETE CASCADE;\par
+ALTER TABLE tabelalojaprodutos ADD CONSTRAINT FK_LOJAS foreign key (lojaid) REFERENCES lojas(id) on delete cascade
+ALTER TABLE pedidositens ADD CONSTRAINT FK_PEDIDOS foreign key (numeroPedidoLoja) REFERENCES Pedidos(numeroPedidoLoja) on delete cascade;
