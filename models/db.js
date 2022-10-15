@@ -8,9 +8,9 @@ const sequelize = new Sequelize(process.env.DB, process.env.DB_USER, process.env
   //testando a conexão
   sequelize.authenticate()
   .then(function(){
-      console.log("Conexão com banco de dados realizada com sucesso")
+      console.log("Conexão com o banco de dados na porta "+process.env.PORT)
     }).catch(function(){
-        console.log("Erro: Conexão falhou")
+      console.log("Erro. Conexão com o banco de dados falhou")
     })
     
   module.exports = sequelize

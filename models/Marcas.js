@@ -4,11 +4,16 @@ const db = require('./db.js') // incluir o banco de dados
 const Produtos = require('./Produtos')
 
 const Marcas =  db.define('marcas',{
+   
        marca: {
         type: Sequelize.STRING,
         allowNull: false,
         primaryKey: true,
-        
+    },
+    usuario: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        primaryKey: true,
     },
 })
 

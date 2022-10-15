@@ -10,6 +10,10 @@ const Lojas =  db.define('lojas',{
         allowNull: false,
         primaryKey: true,
     },
+    usuario: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },
     name: {
         type: Sequelize.STRING,
         allowNull: false,

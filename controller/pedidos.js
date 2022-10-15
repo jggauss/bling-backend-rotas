@@ -7,13 +7,15 @@ const Lojas = require('../models/Lojas')
 const produtos = require('../controller/produtos.js')
 const axios = require('axios');
 const Pedidos = require('../models/Pedidos');
+const PedidosItens = require('../models/PedidosItens');
+const { eAdmin } = require('../middlewares/auth');
 
 
 
-router.get('/pedido/loja/:id', async (req, res) => {
+router.get('/pedido/loja/:id',eAdmin, async (req, res) => {
     const { id } = req.params
-
-    await Lojas.findOne({ where: { codigoBling: id } })
+    const usuario = Number(req.userId)
+    await Lojas.findOne({ where: { codigoBling: id, usuario:usuario} })
         .then((loja) => {
             res.status(200).json(loja)
         })
@@ -30,11 +32,9 @@ router.get('/pedido/loja/:id', async (req, res) => {
 
 
 
-router.post('/pedidos', async (req, res) => {
-
+router.post('/pedidos',eAdmin, async (req, res) => {
+    const usuario = Number(req.userId)
     for (let volta = 1; volta < 100; volta++) {
-
-
         const { inicioIntervalo, fimIntervalo } = req.body
         var qtdRegistros = 0
         const urlPegaPedidos = `https://bling.com.br/Api/v2/pedidos/page=${volta}/json/&filters=dataEmissao[${inicioIntervalo} TO ${fimIntervalo}]/&apikey=${process.env.APIKEY}`
@@ -49,6 +49,7 @@ router.post('/pedidos', async (req, res) => {
                     outrasDespesas: 0,
                     totalProdutos: 0,
                     totalDesconto: '',
+                    usuario:usuario,
                 }
                 async function salvaPedidos(dados) {
                     await Pedidos.create(dados)
@@ -75,6 +76,7 @@ router.post('/pedidos', async (req, res) => {
                     dados.totalDesconto = dado.pedido.desconto.replace(",", ".")
                     dados.situacao = dado.pedido.situacao
                     dados.idLojaVirtual = dado.pedido.loja
+                    dados.usuario = usuario
                     var somaCusto = 0
                     if (tamanhoItens > 0) {
                         let dadosItens = {
@@ -86,6 +88,7 @@ router.post('/pedidos', async (req, res) => {
                             precoCusto: '',
                             descontoItem: '',
                             totalCustoProdutos: 0,
+                            usuario:usuario,
                         }
 
                         for (let a = 0; a < tamanhoItens; a++) {
@@ -96,8 +99,9 @@ router.post('/pedidos', async (req, res) => {
                             dadosItens.valorUnidade = itens[a].item.valorunidade
                             dadosItens.precoCusto = itens[a].item.precocusto
                             dadosItens.descontoItem = itens[a].item.descontoItem
+                            dadosItens.usuario = usuario
                             somaCusto = Number(somaCusto) + (Number(itens[a].item.precocusto) * itens[a].item.quantidade)
-                            const existe = async () => await Pedidos.findOne({ where: { numeroPedidoLoja: dadosItens.numeroPedidoLoja } })
+                            const existe = async () => await Pedidos.findOne({ where: { numeroPedidoLoja: dadosItens.numeroPedidoLoja, usuario:usuario } })
                             existe ? salvaItens(dadosItens) : null
                         }
                     }
@@ -122,11 +126,14 @@ router.post('/pedidos', async (req, res) => {
 )
 
 
-router.get('/pedidos/listar/:loja', async (req, res) => {
+router.get('/pedidos/listar/:loja',eAdmin, async (req, res) => {
     const { loja } = req.params
+    const usuario = Number(req.userId)
     await Pedidos.findAll({
         where:
-            { idLojaVirtual: loja },
+            { idLojaVirtual: loja,
+            usuario:usuario
+        },
         order: [["data", "DESC"]]
     })
         .then((produto) => {
@@ -141,9 +148,10 @@ router.get('/pedidos/listar/:loja', async (req, res) => {
         });
 })
 
-router.get('/pedido/:id', async (req, res) => {
+router.get('/pedido/:id',eAdmin, async (req, res) => {
     const { id } = req.params
-    await Pedidos.findOne({ where: { numeroPedidoLoja: id } })
+    const usuario = Number(req.userId)
+    await Pedidos.findOne({ where: { numeroPedidoLoja: id, usuario:usuario } })
         .then((pedido) => {
             return res.json(pedido)
         })
@@ -154,9 +162,10 @@ router.get('/pedido/:id', async (req, res) => {
             });
         });
 })
-router.get('/pedido/itens/:id', async (req, res) => {
+router.get('/pedido/itens/:id',eAdmin, async (req, res) => {
     const { id } = req.params
-    await PedidosItens.findAll({ where: { numeroPedidoLoja: id } })
+    const usuario = Number(req.userId)
+    await PedidosItens.findAll({ where: { numeroPedidoLoja: id, usuario:usuario } })
         .then((pedidoItens) => {
             return res.json(pedidoItens)
         })

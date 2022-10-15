@@ -4,12 +4,16 @@ const db = require('./db.js') // incluir o banco de dados
 const Lojas = require('./Lojas.js')
 const Produtos = require('./Produtos.js')
 
-const TabelaLojaProduto =  db.define('TabelaLojaProduto',{
+const TabelaLojaProduto =  db.define('tabelaLojaProduto',{
     id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         allowNull: false,
         primaryKey: true,
+    },
+    usuario: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
     },
     precoVenda: {
         type: Sequelize.DECIMAL(6,2)

@@ -8,6 +8,10 @@ const Pedidos = db.define('pedidos', {
         allowNull: false,
         primaryKey: true,
     },
+    usuario: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },
 
     idLojaVirtual: {
         type: Sequelize.STRING,

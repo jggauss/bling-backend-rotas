@@ -8,14 +8,15 @@ const produtos = require('../controller/produtos.js')
 const axios = require('axios');
 const Marcas = require('../models/Marcas');
 const Categorias = require('../models/Categorias');
+const { eAdmin } = require('../middlewares/auth');
 
 
 
-router.get('/marcas', async (req, res) => {
-
+router.get('/marcas',eAdmin, async (req, res) => {
+    const usuario = Number(req.userId)
     const contaMarcas = await Marcas.count()
 
-    await Marcas.findAndCountAll()
+    await Marcas.findAndCountAll({where:{usuario:usuario}})
         .then((marcas) => {
 
             res.json({
@@ -32,11 +33,11 @@ router.get('/marcas', async (req, res) => {
         });
 })
 
-router.get('/categorias', async (req, res) => {
-
+router.get('/categorias',eAdmin, async (req, res) => {
+    const usuario = Number(req.userId)
     const contaCategorias = await Categorias.count()
 
-    await Categorias.findAndCountAll()
+    await Categorias.findAndCountAll({where:{usuario:usuario}})
         .then((categorias) => {
 
             res.json({

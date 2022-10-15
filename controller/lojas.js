@@ -1,16 +1,15 @@
 const express = require('express');
 var router = express.Router()
-const yup = require("yup")
+const yup = require("yup");
+const { eAdmin } = require('../middlewares/auth');
 //const { Op } = require("sequelize");
 const Lojas = require('../models/Lojas')
 
-
-
 //criar loja
-router.post('/lojas', async (req, res) => {
-    console.log("cheguei aqui 2")
+router.post('/lojas',eAdmin, async (req, res) => {
+    
     var dados = req.body
-    console.log(dados)
+    const usuario = Number(req.userId)
     let schema = yup.object().shape({
         percentAcrescAcimaMinimo: yup.string("Erro. Margem Bruta deve ser preenchida").required("Erro. Margem Bruta deve ser preenchida"),
         comissao: yup.string("Erro. Comissão deve ser entre 0 e 40%").required("Erro. Comissão deve ser entre 0 e 40%"),
@@ -32,6 +31,7 @@ router.post('/lojas', async (req, res) => {
     const user = await Lojas.findOne({
         where: {
             codigoBling: dados.codigo,
+            usuario:usuario,
         },
     });
     if (user) {
@@ -55,7 +55,8 @@ router.post('/lojas', async (req, res) => {
         valorFixoFreteAcima: Number(dados.valorFixoFreteAcima.replace(",", ".")),
         valorPercentFreteAcima: Number(dados.valorPercentFreteAcima.replace(",", ".")),
         aumentaValorPedidoMinimo: dados.aumentaValorPedidoMinimo,
-        valorAcimaAumentaParaPedidoMinimo: Number(dados.valorAcimaAumentaParaPedidoMinimo.replace(",", "."))
+        valorAcimaAumentaParaPedidoMinimo: Number(dados.valorAcimaAumentaParaPedidoMinimo.replace(",", ".")),
+        usuario:usuario
     })
         .then(() => {
             return res.json({
@@ -72,12 +73,11 @@ router.post('/lojas', async (req, res) => {
     res.end()
 })
 
-router.put('/loja/:id', async (req, res) => {
+router.put('/loja/:id',eAdmin, async (req, res) => {
 
     var { id } = req.params
-
     const dados = req.body
-
+    const usuario = Number(req.userId)
 
     let schema = yup.object().shape({
         percentAcrescAcimaMinimo: yup.string("Erro. Margem Bruta deve ser preenchida").required("Erro. Margem Bruta deve ser preenchida"),
@@ -97,7 +97,7 @@ router.put('/loja/:id', async (req, res) => {
     }
 
 
-    await Lojas.update(dados, { where: { id: Number(id) } })
+    await Lojas.update(dados, { where: { id: Number(id), usuario:usuario } })
         .then(() => {
             return res.json({
                 erro: false,
@@ -111,9 +111,10 @@ router.put('/loja/:id', async (req, res) => {
             });
         });
 })
-router.delete('/loja/:id', async (req, res) => {
+router.delete('/loja/:id',eAdmin, async (req, res) => {
     const { id } = req.params
-    await Lojas.destroy({ where: { id } })
+    const usuario = Number(req.userId)
+    await Lojas.destroy({ where: { id, usuario:usuario } })
         .then(() => {
             return res.json({
                 erro: false,
@@ -127,10 +128,10 @@ router.delete('/loja/:id', async (req, res) => {
             });
         });
 })
-router.get('/lojas', async (req, res) => {
-
-
+router.get('/lojas',eAdmin, async (req, res) => {
+    const usuario = Number(req.userId)
     await Lojas.findAll({
+        where:{usuario:usuario},
         order: [["name", "ASC"]]
     })
         .then((Lojas) => {
@@ -143,17 +144,16 @@ router.get('/lojas', async (req, res) => {
             });
 
         });
-
-
 })
 
-router.get('/lojas/:page', async (req, res) => {
+router.get('/lojas/:page',eAdmin, async (req, res) => {
 
     const { page = 1 } = req.params;
     const limit = 20;
     var lastPage = 1;
+    const usuario = Number(req.userId)
 
-    const countLojas = await Lojas.count()
+    const countLojas = await Lojas.count({where:{usuario:usuario}})
     if (countLojas === null) {
         return res.status(400).json({
             erro: true,
@@ -165,7 +165,8 @@ router.get('/lojas/:page', async (req, res) => {
 
 
     await Lojas.findAll({
-        attributes: ["id", "name", "codigoBling", "comissao",],
+        where:{usuario:usuario},
+        attributes: ["id", "name", "codigoBling", "comissao","usuario"],
         order: [["name", "DESC"]],
         offset: Number(page * limit - limit),
         limit: limit,
@@ -191,9 +192,10 @@ router.get('/lojas/:page', async (req, res) => {
 })
 
 
-router.get('/loja/:id', async (req, res) => {
+router.get('/loja/:id',eAdmin, async (req, res) => {
     const { id } = req.params
-    await Lojas.findByPk(id)
+    const usuario = Number(req.userId)
+    await Lojas.findOne({where:{codigoBling:id, usuario:usuario}})
         .then((loja) => {
             res.status(200).json(loja)
         })
@@ -209,9 +211,10 @@ router.get('/loja/:id', async (req, res) => {
 })
 
 
-router.get('/lojabling/:id', async (req, res) => {
+router.get('/lojabling/:id',eAdmin, async (req, res) => {
     const { id } = req.params
-    await Lojas.findOne({ where: { codigoBling: id } })
+    const usuario = Number(req.userId)
+    await Lojas.findOne({ where: { codigoBling: id,usuario:usuario } })
         .then((loja) => {
             res.status(200).json(loja)
         })

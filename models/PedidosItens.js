@@ -15,10 +15,11 @@ const PedidosItens =  db.define('pedidositens',{
         //     foreignKey:"numeroPedidoLoja"
         // },
         // onDelete:"CASCADE"
-
-         
-         
      },
+     usuario: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },     
     codigo: {
         type: Sequelize.STRING,
         allowNull: false,

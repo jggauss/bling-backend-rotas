@@ -8,10 +8,12 @@ const Categorias = db.define('categorias', {
         type: Sequelize.STRING,
         allowNull: false,
         primaryKey: true,
-    
-
-
-    }
+    },
+    usuario: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+    },
 })
 
 Categorias.associate = function (models) {

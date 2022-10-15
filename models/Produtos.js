@@ -6,11 +6,20 @@ const Categorias = require('./Categorias')
 const Marcas = require('./Marcas')
 const TabelaLojaProduto = require('./TabelaLojaProduto.js')
 
-const Produtos =  db.define('Produtos',{
+const Produtos =  db.define('produtos',{
+    id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        allowNull: false,
+        primaryKey: true,
+    },
     codigo: {
         type: Sequelize.STRING,
         allowNull: false,
-        primaryKey: true,
+    },
+    usuario: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
     },
     idBling: {
         type: Sequelize.STRING,
