@@ -11,18 +11,26 @@ const { eAdmin } = require('../middlewares/auth');
 const espera = require('../services/delay');
 const PrecificaProdutoLoja = require('../services/precificaProdutoLoja');
 const PegaTodosProdutos = require('../services/PegaTodosProdutos');
+const api = require('../api');
 
 
 //envia todos  os preços de uma loja para o bling
 router.post('/precos/:id', eAdmin, async (req, res) => {
     const { id } = req.params
-    var usuario = req.userId
-    const transfere = {
-        codigoBling:id,
-        usuario:usuario
+    const usuario = req.userId
+    const apikey = req.apikey
+    const acesso = {
+        usuario: usuario,
+        apikey: apikey
     }
-    console.log(transfere)
-    console.log("vou entrar no precificaprodutoloja")
+
+    await PegaTodosProdutos(acesso)
+
+    const transfere = {
+        codigoBling: id,
+        usuario: usuario,
+        apikey: apikey
+    }
     await PrecificaProdutoLoja(transfere)
     console.log("Processo finalizado")
 })
@@ -39,7 +47,7 @@ router.put('/enviaumproduto/:id/:loja', eAdmin, async (req, res) => {
 
     }
 
-    await TabelaLojaProduto.findOne({ where: { produtoid: id, idLojaVirtual: loja, usuario:usuario} })
+    await TabelaLojaProduto.findOne({ where: { produtoid: id, idLojaVirtual: loja, usuario: usuario } })
         .then((produto) => {
             let entrada = `<?xml version="1.0" encoding="UTF-8"?><produtosLoja><produtoLoja><idLojaVirtual>${produto.idProdutoLoja}</idLojaVirtual><preco><preco>${(produto.precoVenda)}</preco><precoPromocional>${produto.precoOferta}</precoPromocional></preco></produtoLoja></produtosLoja>`
             const headerBling = {
@@ -93,7 +101,7 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
             where: {
                 idLojaVirtual: loja,
                 marca: marca,
-                usuario:usuario,
+                usuario: usuario,
                 [Op.or]: [
                     { tipoSimplesComposto: tipo1 },
                     { tipoSimplesComposto: tipo2 }
@@ -113,13 +121,13 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
         }
 
         await TabelaLojaProduto.findAll({
-            attributes: ["name","usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
+            attributes: ["name", "usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
             offset: Number(page * limit - limit),
             limit: limit,
             where: {
                 idLojaVirtual: loja,
                 marca: marca,
-                usuario:usuario,
+                usuario: usuario,
                 [Op.or]: [
                     { tipoSimplesComposto: tipo1 },
                     { tipoSimplesComposto: tipo2 }
@@ -150,7 +158,7 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
         const { count, rows } = await TabelaLojaProduto.findAndCountAll({
             where: {
                 idLojaVirtual: loja,
-                usuario:usuario,
+                usuario: usuario,
                 [Op.or]: [
                     { tipoSimplesComposto: tipo1 },
                     { tipoSimplesComposto: tipo2 }
@@ -168,12 +176,12 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
             lastPage = Math.ceil(countProduto / limit)
         }
         await TabelaLojaProduto.findAll({
-            attributes: ["name","usuario" ,"produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
+            attributes: ["name", "usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
             offset: Number(page * limit - limit),
             limit: limit,
             where: {
                 idLojaVirtual: loja,
-                usuario:usuario,
+                usuario: usuario,
                 [Op.or]: [
                     { tipoSimplesComposto: tipo1 },
                     { tipoSimplesComposto: tipo2 }
@@ -205,7 +213,7 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
         const { count, rows } = await TabelaLojaProduto.findAndCountAll({
             where: {
                 idLojaVirtual: loja,
-                usuario:usuario,
+                usuario: usuario,
                 precoOferta: {
                     [Op.gt]: 0
                 }
@@ -223,12 +231,12 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
         }
 
         await TabelaLojaProduto.findAll({
-            attributes: ["name","usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
+            attributes: ["name", "usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
             offset: Number(page * limit - limit),
             limit: limit,
             where: {
                 idLojaVirtual: loja,
-                usuario:usuario,
+                usuario: usuario,
                 precoOferta: {
                     [Op.gt]: 0
                 }
@@ -267,7 +275,7 @@ router.get('/produtosloja/:page/:loja/:pesquisa', eAdmin, async (req, res) => {
     const { count, rows } = await TabelaLojaProduto.findAndCountAll({
         where: {
             idLojaVirtual: loja,
-            usuario:usuario,
+            usuario: usuario,
             [Op.or]: [
                 {
                     marca:
@@ -303,13 +311,13 @@ router.get('/produtosloja/:page/:loja/:pesquisa', eAdmin, async (req, res) => {
         lastPage = Math.ceil(countProduto / limit)
     }
     await TabelaLojaProduto.findAll({
-        attributes: ["name","usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
+        attributes: ["name", "usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
         offset: Number(page * limit - limit),
         limit: limit,
 
         where: {
             idLojaVirtual: loja,
-            usuario:usuario,
+            usuario: usuario,
             [Op.or]: [
                 {
                     marca:
@@ -360,7 +368,7 @@ router.get('/produtoloja/:loja/:id', eAdmin, async (req, res) => {
     const { loja, id } = req.params
     const usuario = Number(req.userId)
     await TabelaLojaProduto.findOne(
-        { where: { lojaid: loja, produtoid: id, usuario:usuario } }
+        { where: { lojaid: loja, produtoid: id, usuario: usuario } }
     )
         .then((produto) => {
             return res.json(produto)
@@ -381,7 +389,7 @@ router.put('/produtoloja/:loja/:id', eAdmin, async (req, res) => {
     const dados = req.body
     const usuario = Number(req.userId)
 
-    await TabelaLojaProduto.update(dados, { where: { lojaid: loja, produtoid: id, usuario:usuario } })
+    await TabelaLojaProduto.update(dados, { where: { lojaid: loja, produtoid: id, usuario: usuario } })
         .then(() => {
 
             return res.json({
@@ -406,7 +414,7 @@ router.get('/produtosloja/pesquisa/:loja', eAdmin, async (req, res) => {
     await TabelaLojaProduto.findAll({
         where: {
             idLojaVirtual: loja,
-            usuario:usuario,
+            usuario: usuario,
         },
 
     })
@@ -425,27 +433,28 @@ router.get('/produtosloja/pesquisa/:loja', eAdmin, async (req, res) => {
 })
 
 router.post('/precifica', eAdmin, async (req, res) => {
-
     var lista = req.body
-    console.log("Este é o usuário")
     var usuario = Number(req.userId)
-    console.log(usuario)
-    await PegaTodosProdutos(usuario)
-    
+    const apikey = req.apikey
+    const acesso = {
+        usuario: usuario,
+        apikey: apikey
+    }
+
+    await PegaTodosProdutos(acesso)
+
     //calcula os preços por cada loja e salva no mysql
     for (i = 0; i < lista.length; i++) {
         var id = lista[i].codigoBling
-       console.log("olha o número da loja ")
-       console.log(id)
-        console.log(i)
         var loja = await Lojas.findOne({ where: { codigoBling: id } })
         var codigoBling = loja.codigoBling
-        
+
         var usuario = req.userId
-       const transfere = {
-        codigoBling : codigoBling,
-        usuario : usuario
-       }
+        const transfere = {
+            codigoBling: codigoBling,
+            usuario: usuario,
+            apikey: apikey
+        }
         //pega todos os produtos que foram salvos no mysql para trabalhar cada loja
         await PrecificaProdutoLoja(transfere)
         await espera(350)

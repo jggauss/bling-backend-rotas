@@ -10,10 +10,10 @@ const { eAdmin } = require('../middlewares/auth')
 
 router.post('/cadastrar', async (req, res) => {
     var dados = req.body
-
     const user = await Users.findOne({
         where: {
-            email: dados.email
+            email: dados.email,
+            
         }
     })
     if (user) {
@@ -29,7 +29,8 @@ router.post('/cadastrar', async (req, res) => {
     await Users.create({
         name: dados.name,
         email: dados.email,
-        password: dados.password
+        password: dados.password,
+        apikey: dados.apikey
     })
         .then((response) => {
             return response
@@ -44,8 +45,13 @@ router.put('/user',eAdmin, async (req, res) => {
         where: { email: dados.email }
     })
         .then((response) => {
-            return response
+            return res.status(200).json({
+                erro: false,
+                mensagem: "Usuário alterado com sucesso"
+            })
         })
+        
+            
         .catch((err) => { res.status(400) })
     res.end()
 
@@ -54,7 +60,7 @@ router.put('/user',eAdmin, async (req, res) => {
 
 router.post('/', async (req, res) => {
     const user = await Users.findOne({
-        attributes: ["id", "name", "email", "password"],
+        attributes: ["id", "name", "email","apikey", "password"],
         where: { email: req.body.email }
     })
     if (user === null) {
@@ -73,7 +79,7 @@ router.post('/', async (req, res) => {
 
     }
 
-    var token = jwt.sign({ id: user.id }, process.env.PAYLOAD, {
+    var token = jwt.sign({ id: user.id, apikey:user.apikey }, process.env.PAYLOAD, {
         expiresIn: '7d' //7 dias
     })
 
@@ -86,14 +92,20 @@ router.post('/', async (req, res) => {
 })
 
 router.get('/user', eAdmin, async (req, res) => {
+    console.log("cheguei aqui no pesquisa usuário")
     var dados = req.body
+    const usuario = req.userId
+    
+    console.log("olha o usuário "+usuario)
+    console.log(req.body)
     const user = await Users.findOne({
-        attributes: ["id", "name", "email", "password"],
+        attributes: ["id", "name", "email","apikey", "password"],
         where: {
-            email: req.body.email
+            id: usuario,
         }
     })
         .then((response) => {
+            console.log("mandando o usuário "+JSON.stringify(response))
             res.json(response)
         })
         .catch((err) => {

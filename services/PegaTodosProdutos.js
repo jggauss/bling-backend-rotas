@@ -5,8 +5,10 @@ const Produtos = require("../models/Produtos");
 const espera = require('./delay');
 
 
-async function PegaTodosProdutos(usuario) {
-    var usuario = usuario
+async function PegaTodosProdutos(acesso) {
+    console.log(acesso)
+    var usuario = acesso.usuario
+    const apikey = acesso.apikey
     console.log(usuario)
     console.log(typeof (usuario))
     var situacao = ""
@@ -20,7 +22,7 @@ async function PegaTodosProdutos(usuario) {
 
         for (var i = 1; i < 100; i++) {
 
-            const urlPegaTodosProdutos = `https://bling.com.br/Api/v2/produtos/page=${i}/json/&filters=situacao[${situacao}]/&apikey=${process.env.APIKEY}`
+            const urlPegaTodosProdutos = `https://bling.com.br/Api/v2/produtos/page=${i}/json/&filters=situacao[${situacao}]/&apikey=${apikey}`
 
             await axios.get(urlPegaTodosProdutos)
                 .then((response) => {

@@ -1,27 +1,28 @@
+const api = require("../api")
 const TabelaLojaProduto = require("../models/TabelaLojaProduto")
 const espera = require("./delay")
-
 const enviaProdutoBling = require("./enviaProdutoBling")
 const montaUrlSalvarBling = require("./montaUrlSalvarBling")
 
-async function EncontraSalvaProdutoLoja(dadosProduto) {
-    console.log("entrei no encontrasalvaprodutoloja")
-    
+async function EncontraSalvaProdutoLoja(tranportaDados) {
+    const usuario = tranportaDados.usuario
+    var dadosProduto = tranportaDados.dadosProduto
+    const apikey = tranportaDados.apikey
+    const tranfere = {
+        dadosProduto : dadosProduto,
+        apikey :apikey
+    }
     const existe = await TabelaLojaProduto.findOne({
         where: {
             lojaid: dadosProduto.lojaid,
             produtoid: dadosProduto.produtoid,
+            usuario:usuario
         }
     })
-    console.log("este é o que eu procuro")
-    
-    console.log(dadosProduto.precoVenda)
     if(dadosProduto.precoVenda >0){
-        console.log("entrei aqui pois é maior que zero")
-        !existe ? await TabelaLojaProduto.create(dadosProduto) : await TabelaLojaProduto.update(dadosProduto, { where: { lojaid: dadosProduto.lojaid, produtoid: dadosProduto.produtoid, usuario:dadosProduto.usuario } })
-        console.log("Salvei")
+        !existe ? await TabelaLojaProduto.create(dadosProduto) : await TabelaLojaProduto.update(dadosProduto, { where: { lojaid: dadosProduto.lojaid, produtoid: dadosProduto.produtoid, usuario:usuario } })
         //monta a url, body e header para salvar no bling
-        var transporta =  montaUrlSalvarBling(dadosProduto)
+        var transporta =  montaUrlSalvarBling(tranfere)
         var trans = {
             urlPost: (await transporta).urlPost,
             body: (await transporta).body,
@@ -29,7 +30,6 @@ async function EncontraSalvaProdutoLoja(dadosProduto) {
         }
     
         //salva o preço do produto no bling
-        console.log("vou entrar no enviaprodutobling")
         await espera(350)
         await enviaProdutoBling(trans)
         

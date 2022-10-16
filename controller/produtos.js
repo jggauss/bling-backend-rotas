@@ -25,8 +25,9 @@ router.get('/', (req, res) => {
 router.get('/pegaumproduto/:id', eAdmin, (req, res) => {
     var id = req.params
     var od = id.id
+    const apikey = user.apikey
 
-    var urlPegaUmProduto = `https://bling.com.br/Api/v2/produto/${od}/json/&apikey=${process.env.APIKEY}`
+    var urlPegaUmProduto = `https://bling.com.br/Api/v2/produto/${od}/json/&apikey=${apikey}`
 
 
 
@@ -44,10 +45,10 @@ router.get('/pegaumproduto/:id', eAdmin, (req, res) => {
 
 //pega um produto no preco certo (diferente do anterior que busca no bling)
 router.get('/produto/:id', eAdmin, async (req, res) => {
-
+    const usuario = req.userId
     var ad = req.params
     var od = (ad.id)
-    await Produtos.findByPk(od)
+    await Produtos.findOne({where:{codigo:od,usuario:usuario}})
         .then((produto) => {
 
             res.status(200).json(produto)
@@ -67,10 +68,14 @@ router.get('/produto/:id', eAdmin, async (req, res) => {
 //busca todos os produtos no bling(ativos e inativos)
 router.post('/pegatodosprodutos/', eAdmin, async (req, res) => {
     
-    usuario = Number(req.userId)
-    console.log("este aqui é o usuáiro "+usuario)
-    await PegaTodosProdutos(usuario)
-    console.log("arre. cheguei aqui no fim. Amém")
+    const usuario = Number(req.userId)
+    const apikey = req.apikey
+    const acesso = {
+        usuario : usuario,
+        apikey : apikey
+    }
+    await PegaTodosProdutos(acesso)
+    console.log("Cheguei no fim.")
 })
 
 
@@ -79,8 +84,7 @@ router.get('/produtos/:page/:marca/:categoria', eAdmin, async (req, res) => {
     const { page = 1, marca } = req.params;
     const limit = 20;
     var lastPage = 1;
-    const usuario = Number(req.userId)
-
+    const usuario = req.userId
     async function mostraTudo() {
         const countProduto = await Produtos.count({where:{usuario:usuario}})
         if (countProduto === null) {
@@ -139,13 +143,14 @@ router.get('/produtos/:page/:marca/:categoria', eAdmin, async (req, res) => {
 
 
         await Produtos.findAll({
-            where:{usuario:usuario},
+            
             attributes: ["codigo", "idBling", "name", "precoCusto", "marca", "nameCategoria", "nomeFornecedor","usuario"],
             order: [["name", "ASC"]],
             offset: Number(page * limit - limit),
             limit: limit,
 
             where: {
+                usuario:usuario,
                 [Op.or]: [{ marca: marca }],
             }
 
@@ -271,6 +276,7 @@ router.get('/produtos/:page/:pesquisa', eAdmin, async (req, res) => {
 //produtos com custo zero
 router.get("/zerados", eAdmin, async (req, res, next) => {
     const usuario= Number(req.userId)
+    const apikey = req.apikey
     await Produtos.findAll({
         where: { 
             usuario:usuario,
@@ -290,24 +296,37 @@ router.get("/zerados", eAdmin, async (req, res, next) => {
 })
 
 router.post("/precifica/selecionado", eAdmin, async (req, res) => {
-    //pega os produtos selecionados através do req.body
-    var lista = req.body
-    console.log("carai. não é aqui?")
-    //pegando os produtos selecionados
-    await aguarda(lista)
+    const apikey = req.apikey
     const usuario = Number(req.userId)
-    async function aguarda(lista) {
+    var lista = req.body
+    //pegando os produtos selecionados
+    const transfere = {
+        apikey:apikey,
+        usuario:usuario,
+        lista:lista
+    }
+    await aguarda(transfere)
+    
+    async function aguarda(transfere) {
+        const apikey = transfere.apikey
+        const usuario = transfere.usuario
+        const lista = transfere.lista
         for (let e = 0; e < lista.length; e++) {
-            console.log('cheguei 1')
-            console.log(lista[e])
-            console.log("olha o tamanho da lista"+lista.length)
-            await pegaProduto(lista[e])
-            console.log("cheguei 2")
+            const acesso = {
+                produto : lista[e],
+                usuario : usuario,
+                apikey :apikey
+            }
+            await pegaProduto(acesso)
             await espera(1000);
         }
     }
     //pega no bling e salva o produto
-    async function pegaProduto(produto) {
+    async function pegaProduto(acesso) {
+
+        const produto = acesso.produto
+        const usuario = acesso.usuario
+        const apikey = acesso.apikey
         await espera(1000)
             await Produtos.findOne({
                 where:{
@@ -316,10 +335,6 @@ router.post("/precifica/selecionado", eAdmin, async (req, res) => {
                 }
             })
             .then((prod) => {
-                console.log("kykyky")
-                console.log(prod)               
-                console.log(prod.codigo)
-
                 const dados10 = {
                     codigo: prod.codigo,
                     idBling: prod.idBling,
@@ -331,10 +346,9 @@ router.post("/precifica/selecionado", eAdmin, async (req, res) => {
                     nameCategoria: prod.nameCategoria,
                     nomeFornecedor: prod.nomeFornecedor,
                     tipoSimplesComposto:prod.tipoSimplesComposto,
-                    usuario:prod.usuario
+                    usuario:usuario,
+                    apikey:apikey
                 }
-                console.log("olha isso")
-                console.log(dados10)
                 ProdutoSalva(dados10)
                 PercorreLojas(dados10)
             })
