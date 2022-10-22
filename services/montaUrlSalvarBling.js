@@ -1,8 +1,6 @@
-async function montaUrlSalvarBling(transfere) {
+function montaUrlSalvarBling(transfere) {
     const dadosProduto = transfere.dadosProduto
     const apikey = transfere.apikey
-    console.log(transfere)
-
     let entrada = `<?xml version="1.0" encoding="UTF-8"?><produtosLoja><produtoLoja><idLojaVirtual>${dadosProduto.idProdutoLoja}</idLojaVirtual><preco><preco>${(dadosProduto.precoVenda)}</preco><precoPromocional>${dadosProduto.precoOferta}</precoPromocional></preco></produtoLoja></produtosLoja>`
     const headerBling = {
         headers: {

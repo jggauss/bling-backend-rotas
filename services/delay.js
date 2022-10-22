@@ -1,7 +1,5 @@
-
-
- function espera(ms) {
-    return new Promise((resolve) => {
+async  function espera(ms) {
+    return await new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
 }

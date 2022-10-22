@@ -1,6 +1,6 @@
 
 function calculaPrecoFinal(dadosCalculo){
-    console.log("cheguei aqui")
+
     var B = Number(dadosCalculo.loja.percentAcrescAcimaMinimo) / 100 || 0
     var C = Number(dadosCalculo.loja.valorPercentFreteAcima) / 100 || 0
     var D = Number(dadosCalculo.loja.valorFixoFreteAcima)
@@ -29,9 +29,8 @@ function calculaPrecoFinal(dadosCalculo){
 
         precoFinal = Number(precoBarato)
     }
-    console.log("Olha o preco final")
-    console.log(precoFinal)
-    
+
+
     return precoFinal
 
 }

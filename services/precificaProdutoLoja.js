@@ -10,9 +10,9 @@ async function PrecificaProdutoLoja(transfere) {
     var loja = await Lojas.findOne({ where: { codigoBling: id, usuario:usuario } })
     const todosProdutos = await Produtos.findAll({where:{usuario:usuario}})
     var codigoBling = loja.codigoBling
-    for (let i = 0; i <= todosProdutos.length - 1; i++) {
+    const tamanho = todosProdutos.length
+    for (let i = 0; i < todosProdutos.length; i++) {
         let produto = todosProdutos[i].codigo
-
         let parametros = {
             produto:produto,
             codigoBling:codigoBling,
@@ -22,7 +22,7 @@ async function PrecificaProdutoLoja(transfere) {
             apikey:apikey
         }
         FazUmProduto(parametros)
-        await espera(350);
+        await espera(1000);
     }
 }
 

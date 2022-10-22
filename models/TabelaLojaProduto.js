@@ -15,7 +15,22 @@ const TabelaLojaProduto =  db.define('tabelaLojaProduto',{
         type: Sequelize.INTEGER,
         allowNull: false,
     },
+    situacao: {
+        type: Sequelize.STRING
+    },
     precoVenda: {
+        type: Sequelize.DECIMAL(6,2)
+    },
+    descontoPercent: {
+        type: Sequelize.DECIMAL(6,2)
+    },
+    descontoValor: {
+        type: Sequelize.DECIMAL(6,2)
+    },
+    acrescimoPercent: {
+        type: Sequelize.DECIMAL(6,2)
+    },
+    acrescimoValor: {
         type: Sequelize.DECIMAL(6,2)
     },
     precoOferta: {

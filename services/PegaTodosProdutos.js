@@ -6,11 +6,9 @@ const espera = require('./delay');
 
 
 async function PegaTodosProdutos(acesso) {
-    console.log(acesso)
+
     var usuario = acesso.usuario
     const apikey = acesso.apikey
-    console.log(usuario)
-    console.log(typeof (usuario))
     var situacao = ""
     const dataHoje = new Date()
     var todosProdutos = 0
@@ -23,33 +21,26 @@ async function PegaTodosProdutos(acesso) {
         for (var i = 1; i < 100; i++) {
 
             const urlPegaTodosProdutos = `https://bling.com.br/Api/v2/produtos/page=${i}/json/&filters=situacao[${situacao}]/&apikey=${apikey}`
-
             await axios.get(urlPegaTodosProdutos)
                 .then((response) => {
                     todosProdutos = response.data.retorno.produtos
                     tamanho = todosProdutos.length
                     todosProdutos.map(async (produto) => {
-
                         const existe = await Produtos.findOne({
                             where: {
                                 codigo: produto.produto.codigo,
                                 usuario: usuario
                             }
                         })
-                        //console.log(existe)
                         produto.produto.estrutura ? simplesComposto = "Composto" : simplesComposto = "Simples"
-
                         const dadosMarca = {
                             marca: produto.produto.marca,
                             usuario: usuario
                         }
-
                         const dadosCategoria = {
-
                             nameCategoria: produto.produto.categoria.descricao,
                             usuario: usuario
                         }
-
                         const dados = {
                             codigo: produto.produto.codigo,
                             idBling: produto.produto.id,
@@ -64,30 +55,24 @@ async function PegaTodosProdutos(acesso) {
                             usuario: usuario
 
                         }
-
                         if (!existe) {
-                            console.log("Não existe e estou salvando o usuário " + usuario)
-                            //console.log(existe)
                             await Produtos.create(dados)
-                                .then(() => { console.log("olha os dados " + dados.codigo + " " + dados.name + " " + dados.precoCusto) })
-                                .catch(() => { console.log("não deu certo produtos") })
-                            console.log("vou entrar no salvacategoria")
+                                .then(() => { })
+                                .catch(() => { })
                             await Categorias.create(dadosCategoria)
-                                .then(() => { })
+                                .then(() => {})
                                 .catch(() => { })
-                            console.log("vou entrar no salvamarcas")
                             await Marcas.create(dadosMarca)
-                                .then(() => { })
-                                .catch(() => { })
-                            console.log("salvei marca e categoria")
-
+                                .then(() => {})
+                                .catch(() => {})
                         }
 
                         if (existe) {
-                            console.log("existe e estou salvando o usuário " + usuario)
-                            //console.log(existe)
-
                             await Produtos.update(dados, { where: { codigo: dados.codigo, usuario: usuario } })
+                            .then(()=>{
+                            })
+                            .catch(()=>{
+                            })
                             // await Categorias.create(dadosCategoria)
                             //     .then(() => {})
                             //     .catch((err) => {})
@@ -98,13 +83,12 @@ async function PegaTodosProdutos(acesso) {
                         }
                     })
                 })
-                .catch((err) => {
-                    console.log(err)
+                .catch(() => {
+
                 })
 
             await espera(3000)
-            console.log("olha o tamanho*******************************************")
-            console.log(tamanho)
+
             if (tamanho < 99) { console.log("Processo finalizado") }
             if (tamanho < 99) { break }
         }

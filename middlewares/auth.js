@@ -20,7 +20,6 @@ module.exports ={
             const decoded =  await promisify(jwt.verify)(token, process.env.PAYLOAD)
             req.userId = decoded.id
             req.apikey = decoded.apikey
-            console.log(req.userId)
             return next()
         } catch (error) {
             return res.status(400).json({

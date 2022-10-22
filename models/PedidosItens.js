@@ -19,6 +19,7 @@ const PedidosItens =  db.define('pedidositens',{
      usuario: {
         type: Sequelize.INTEGER,
         allowNull: false,
+        primaryKey: true,
     },     
     codigo: {
         type: Sequelize.STRING,

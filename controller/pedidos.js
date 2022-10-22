@@ -1,14 +1,11 @@
 const express = require('express');
 var router = express.Router()
-const yup = require("yup")
-const { Op } = require("sequelize");
-const Produtos = require('../models/Produtos')
 const Lojas = require('../models/Lojas')
-const produtos = require('../controller/produtos.js')
 const axios = require('axios');
 const Pedidos = require('../models/Pedidos');
 const PedidosItens = require('../models/PedidosItens');
 const { eAdmin } = require('../middlewares/auth');
+const espera = require('../services/delay');
 
 
 
@@ -33,11 +30,14 @@ router.get('/pedido/loja/:id',eAdmin, async (req, res) => {
 
 
 router.post('/pedidos',eAdmin, async (req, res) => {
+    console.log("cheguei nos p")
+    const apikey = req.apikey
     const usuario = Number(req.userId)
     for (let volta = 1; volta < 100; volta++) {
         const { inicioIntervalo, fimIntervalo } = req.body
         var qtdRegistros = 0
-        const urlPegaPedidos = `https://bling.com.br/Api/v2/pedidos/page=${volta}/json/&filters=dataEmissao[${inicioIntervalo} TO ${fimIntervalo}]/&apikey=${process.env.APIKEY}`
+        const urlPegaPedidos = `https://bling.com.br/Api/v2/pedidos/page=${volta}/json/&filters=dataEmissao[${inicioIntervalo} TO ${fimIntervalo}]/&apikey=${apikey}`
+        
         axios.get(urlPegaPedidos)
             .then((response) => {
                 qtdRegistros = response.data.retorno.pedidos.length
@@ -53,8 +53,10 @@ router.post('/pedidos',eAdmin, async (req, res) => {
                 }
                 async function salvaPedidos(dados) {
                     await Pedidos.create(dados)
-                        .then(() => { })
-                        .catch(() => { })
+                        .then(() => {
+                             })
+                        .catch((err) => { 
+                            console.log(err)})
                 }
                 async function salvaItens(dadosItens) {
                     await PedidosItens.create(dadosItens)
@@ -110,16 +112,8 @@ router.post('/pedidos',eAdmin, async (req, res) => {
                 }
             })
             .catch(() => { })
-        await sleep(1015);
-        function sleep(ms) {
-            return new Promise((resolve) => {
-                setTimeout(resolve, ms);
-            });
-
-        }
-
-
-
+        await espera(1015);
+        
         if (qtdRegistros <= 99) { break }
     }
 }

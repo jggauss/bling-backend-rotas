@@ -22,21 +22,18 @@ async function EncontraSalvaProdutoLoja(tranportaDados) {
     if(dadosProduto.precoVenda >0){
         !existe ? await TabelaLojaProduto.create(dadosProduto) : await TabelaLojaProduto.update(dadosProduto, { where: { lojaid: dadosProduto.lojaid, produtoid: dadosProduto.produtoid, usuario:usuario } })
         //monta a url, body e header para salvar no bling
-        var transporta =  montaUrlSalvarBling(tranfere)
+        var transporta =   montaUrlSalvarBling(tranfere)
         var trans = {
-            urlPost: (await transporta).urlPost,
-            body: (await transporta).body,
-            headerBling: (await transporta).headerBling
+            urlPost: transporta.urlPost,
+            body: transporta.body,
+            headerBling: transporta.headerBling
         }
     
         //salva o preço do produto no bling
         await espera(350)
+
         await enviaProdutoBling(trans)
-        
-    }else{
-        console.log("não entrei porque é zero ou menor***************************************************************************"+dadosProduto.precoVenda)
     }
-    
 }
 
 module.exports = EncontraSalvaProdutoLoja

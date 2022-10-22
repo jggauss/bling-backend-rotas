@@ -2,11 +2,12 @@ const axios = require('axios');
 const calculaPrecoFinal = require('./calculaPrecoFinal');
 const espera = require('./delay');
 const EncontraSalvaProdutoLoja = require('./encontraSalvaProdutoLoja');
+
 async function FazUmProduto(parametros) {
-
-
+    await espera(1350)
     const usuario = parametros.usuario
     const apikey = parametros.apikey
+    
     const urlPesquisaLoja = `https://bling.com.br/Api/v2/produto/${parametros.produto}/json/&loja=${parametros.codigoBling}&apikey=${apikey}`
     await axios.get(urlPesquisaLoja)
         .then((response) => {
@@ -30,6 +31,7 @@ async function FazUmProduto(parametros) {
                     produtoid: parametros.produto,
                     name: parametros.produtoCompleto.name,
                     marca: parametros.produtoCompleto.marca,
+                    situacao: parametros.produtoCompleto.situacao,
                     precoVenda: precoFinal,
                     idLojaVirtual: parametros.loja.codigoBling,
                     usuario: usuario,
@@ -38,18 +40,17 @@ async function FazUmProduto(parametros) {
                     tipoSimplesComposto: parametros.produtoCompleto.tipoSimplesComposto
                 }
                 const tranportaDados = {
-                    dadosProduto:dadosProduto,
-                    apikey:apikey,
-                    usuario:usuario
+                    dadosProduto: dadosProduto,
+                    apikey: apikey,
+                    usuario: usuario
                 }
-
                 //procura pelo produto: se existe na loja salva atualizando, senão cria.
                 EncontraSalvaProdutoLoja(tranportaDados)
             }
         })
-        .catch(() => {
-        });
+        .catch(() => {});
         await espera(350)
 }
+
 
 module.exports = FazUmProduto

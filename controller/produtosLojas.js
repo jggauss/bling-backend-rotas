@@ -7,15 +7,17 @@ const Lojas = require('../models/Lojas')
 const axios = require('axios');
 const TabelaLojaProduto = require('../models/TabelaLojaProduto');
 const { eAdmin } = require('../middlewares/auth');
-
 const espera = require('../services/delay');
 const PrecificaProdutoLoja = require('../services/precificaProdutoLoja');
 const PegaTodosProdutos = require('../services/PegaTodosProdutos');
 const api = require('../api');
+const moment = require('moment');
+const Produtos = require('../models/Produtos');
+const FazUmProduto = require('../services/fazUmProduto');
 
 
 //envia todos  os preços de uma loja para o bling
-router.post('/precos/:id', eAdmin, async (req, res) => {
+router.post('/precificaloja/:id', eAdmin, async (req, res) => {
     const { id } = req.params
     const usuario = req.userId
     const apikey = req.apikey
@@ -37,9 +39,12 @@ router.post('/precos/:id', eAdmin, async (req, res) => {
 //envia o preço de um produtos para uma determinada loja
 
 router.put('/enviaumproduto/:id/:loja', eAdmin, async (req, res) => {
+    console.log("cheguei aqui")
     const { id, loja } = req.params
     const usuario = req.userId
+    const apikey = req.apikey
     async function enviaProdutoBling(transporta) {
+        
         await axios.put(transporta.urlPost, transporta.body, transporta.headerBling)
             .then((response) => { "deu certo " + response.data })
             .catch((erro) => { console.log("de errado  ===== " + erro) })
@@ -49,14 +54,16 @@ router.put('/enviaumproduto/:id/:loja', eAdmin, async (req, res) => {
 
     await TabelaLojaProduto.findOne({ where: { produtoid: id, idLojaVirtual: loja, usuario: usuario } })
         .then((produto) => {
+            console.log("a bosta do produto")
+            console.log(produto)
             let entrada = `<?xml version="1.0" encoding="UTF-8"?><produtosLoja><produtoLoja><idLojaVirtual>${produto.idProdutoLoja}</idLojaVirtual><preco><preco>${(produto.precoVenda)}</preco><precoPromocional>${produto.precoOferta}</precoPromocional></preco></produtoLoja></produtosLoja>`
             const headerBling = {
                 headers: {
                     'Content-Type': 'text/xml',
-                    'x-api-key': process.env.APIKEY,
+                    'x-api-key': apikey,
                 },
             };
-            var urlPost = `https://bling.com.br/Api/v2/produtoLoja/${produto.idLojaVirtual}/${produto.produtoid}/json?xml=${encodeURI(entrada)}&apikey=${process.env.APIKEY}`
+            var urlPost = `https://bling.com.br/Api/v2/produtoLoja/${produto.idLojaVirtual}/${produto.produtoid}/json?xml=${encodeURI(entrada)}&apikey=${apikey}`
             let transporta = {
                 urlPost: urlPost,
                 body: "",
@@ -67,13 +74,16 @@ router.put('/enviaumproduto/:id/:loja', eAdmin, async (req, res) => {
         })
         .catch(() => { })
 })
-router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (req, res) => {
+//pega todos os produtos por loja
+router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao/:situacao/:desconto', eAdmin, async (req, res) => {
     const { page = 1 } = req.params;
     const limit = 20;
     var lastPage = 1;
     var { marca } = req.params
     const { loja } = req.params
     const { tipo } = req.params
+    const { situacao } = req.params
+    const { desconto } = req.params
     const usuario = Number(req.userId)
     //const { pesquisa } = req.params
 
@@ -94,7 +104,21 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
         tipo2 = "Composto"
     }
 
+    let situacao1 = ""
+    let situacao2 = ""
 
+    if (situacao === "Todos") {
+        situacao1 = "Ativo"
+        situacao2 = "Inativo"
+    }
+    if (situacao === "Ativo") {
+        situacao1 = "Ativo"
+        situacao2 = "Ativo"
+    }
+    if (situacao === "Inativo") {
+        situacao1 = "Inativo"
+        situacao2 = "Inativo"
+    }
     async function exibeMarca() {
 
         const { count, rows } = await TabelaLojaProduto.findAndCountAll({
@@ -102,9 +126,21 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
                 idLojaVirtual: loja,
                 marca: marca,
                 usuario: usuario,
-                [Op.or]: [
-                    { tipoSimplesComposto: tipo1 },
-                    { tipoSimplesComposto: tipo2 }
+
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { tipoSimplesComposto: tipo1 },
+                            { tipoSimplesComposto: tipo2 },
+
+                        ],
+                    },
+                    {
+                        [Op.or]: [
+                            { situacao: situacao1 },
+                            { situacao: situacao2 }
+                        ]
+                    }
                 ]
 
             }
@@ -121,16 +157,28 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
         }
 
         await TabelaLojaProduto.findAll({
-            attributes: ["name", "usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
+            attributes: ["name", "usuario", "produtoid", "situacao", "marca", "nameCategoria", "precoVenda", "precoOferta", "descontoPercent", "descontoValor", "acrescimoPercent", "acrescimoValor", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
             offset: Number(page * limit - limit),
             limit: limit,
             where: {
                 idLojaVirtual: loja,
                 marca: marca,
                 usuario: usuario,
-                [Op.or]: [
-                    { tipoSimplesComposto: tipo1 },
-                    { tipoSimplesComposto: tipo2 }
+
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { tipoSimplesComposto: tipo1 },
+                            { tipoSimplesComposto: tipo2 },
+
+                        ],
+                    },
+                    {
+                        [Op.or]: [
+                            { situacao: situacao1 },
+                            { situacao: situacao2 }
+                        ]
+                    }
                 ]
             },
             order: [["name", "ASC"]],
@@ -151,17 +199,26 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
 
             });
     }
-
-
-
     async function exibeTudo() {
         const { count, rows } = await TabelaLojaProduto.findAndCountAll({
             where: {
                 idLojaVirtual: loja,
                 usuario: usuario,
-                [Op.or]: [
-                    { tipoSimplesComposto: tipo1 },
-                    { tipoSimplesComposto: tipo2 }
+
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { tipoSimplesComposto: tipo1 },
+                            { tipoSimplesComposto: tipo2 },
+
+                        ],
+                    },
+                    {
+                        [Op.or]: [
+                            { situacao: situacao1 },
+                            { situacao: situacao2 }
+                        ]
+                    }
                 ]
             }
         })
@@ -176,16 +233,28 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
             lastPage = Math.ceil(countProduto / limit)
         }
         await TabelaLojaProduto.findAll({
-            attributes: ["name", "usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
+            attributes: ["name", "usuario", "produtoid", "marca", "situacao", "nameCategoria", "precoVenda", "precoOferta", "descontoPercent", "descontoValor", "acrescimoPercent", "acrescimoValor", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
             offset: Number(page * limit - limit),
             limit: limit,
             where: {
                 idLojaVirtual: loja,
                 usuario: usuario,
-                [Op.or]: [
-                    { tipoSimplesComposto: tipo1 },
-                    { tipoSimplesComposto: tipo2 }
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { tipoSimplesComposto: tipo1 },
+                            { tipoSimplesComposto: tipo2 },
+
+                        ],
+                    },
+                    {
+                        [Op.or]: [
+                            { situacao: situacao1 },
+                            { situacao: situacao2 }
+                        ]
+                    }
                 ]
+
 
             },
             order: [["name", "ASC"]],
@@ -214,6 +283,7 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
             where: {
                 idLojaVirtual: loja,
                 usuario: usuario,
+
                 precoOferta: {
                     [Op.gt]: 0
                 }
@@ -231,12 +301,13 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
         }
 
         await TabelaLojaProduto.findAll({
-            attributes: ["name", "usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
+            attributes: ["name", "usuario", "produtoid", "marca", "situacao", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
             offset: Number(page * limit - limit),
             limit: limit,
             where: {
                 idLojaVirtual: loja,
                 usuario: usuario,
+
                 precoOferta: {
                     [Op.gt]: 0
                 }
@@ -260,8 +331,86 @@ router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao', eAdmin, async (re
 
             });
     }
+    async function exibeDesconto() {
+
+        const { count, rows } = await TabelaLojaProduto.findAndCountAll({
+            where: {
+                idLojaVirtual: loja,
+                usuario: usuario,
+                [Op.or]:
+                [
+                    {descontoPercent: {
+                    [Op.gt]: 0
+                }},
+                {descontoValor: {
+                    [Op.gt]: 0
+                }},
+                {acrescimoPercent: {
+                    [Op.gt]: 0
+                }},
+                {acrescimoValor: {
+                    [Op.gt]: 0
+                }},
+            ],
+                
+                
+            }
+        })
+        const countProduto = count
+
+        if (countProduto === null) {
+            return res.status(400).json({
+                erro: true,
+                mensagem: "Erro. Nenhum produto encontrado"
+            })
+        } else {
+            lastPage = Math.ceil(countProduto / limit)
+        }
+
+        await TabelaLojaProduto.findAll({
+            attributes: ["name", "usuario", "produtoid", "marca", "situacao", "nameCategoria", "precoVenda", "precoOferta","descontoPercent","descontoValor","acrescimoPercent","acrescimoValor", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
+            offset: Number(page * limit - limit),
+            limit: limit,
+            where: {
+                idLojaVirtual: loja,
+                usuario: usuario,
+                [Op.or]:
+                [
+                    {descontoPercent: {
+                    [Op.gt]: 0
+                }},
+                {descontoValor: {
+                    [Op.gt]: 0
+                }},
+                {acrescimoPercent: {
+                    [Op.gt]: 0
+                }},
+                {acrescimoValor: {
+                    [Op.gt]: 0
+                }},
+            ],
+
+            },
+            order: [["name", "ASC"]],
+        })
+            .then((produtosPorLoja) => {
+                res.json({
+                    erro: false,
+                    produtosPorLoja,
+                    countProduto,
+                    lastPage
+                }
+                )
+            }).catch(() => {
+                return res.status(400).json({
+                    erro: true,
+                    mensagem: "Erro: Nenhum produto encontrado para esta loja",
+                });
+
+            });
+    }
     //exibeTudo()
-    promocao == "Promocao" ? exibePromocao() : (marca != "undefined" && marca != "Selecione Marca") ? exibeMarca() : exibeTudo()
+    desconto=="Desconto"?exibeDesconto():(promocao == "Promocao" ? exibePromocao() : (marca != "undefined" && marca != "Selecione Marca") ? exibeMarca() : exibeTudo())
 
 })
 
@@ -271,12 +420,16 @@ router.get('/produtosloja/:page/:loja/:pesquisa', eAdmin, async (req, res) => {
     var lastPage = 1;
     const { loja } = req.params
     const { pesquisa } = req.params
+
     const usuario = Number(req.userId)
+
+
     const { count, rows } = await TabelaLojaProduto.findAndCountAll({
         where: {
             idLojaVirtual: loja,
             usuario: usuario,
             [Op.or]: [
+
                 {
                     marca:
                     {
@@ -311,7 +464,7 @@ router.get('/produtosloja/:page/:loja/:pesquisa', eAdmin, async (req, res) => {
         lastPage = Math.ceil(countProduto / limit)
     }
     await TabelaLojaProduto.findAll({
-        attributes: ["name", "usuario", "produtoid", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
+        attributes: ["name", "usuario", "produtoid", "situacao", "marca", "nameCategoria", "precoVenda", "precoOferta", "inicioOferta", "fimOferta", "inicioOfertaHora", "fimOfertaHora", "tipoSimplesComposto"],
         offset: Number(page * limit - limit),
         limit: limit,
 
@@ -363,7 +516,7 @@ router.get('/produtosloja/:page/:loja/:pesquisa', eAdmin, async (req, res) => {
 })
 
 //busca um produto de uma loja
-router.get('/produtoloja/:loja/:id', eAdmin, async (req, res) => {
+router.get('/produtoloja/:loja/:id/:name', eAdmin, async (req, res) => {
 
     const { loja, id } = req.params
     const usuario = Number(req.userId)
@@ -376,28 +529,25 @@ router.get('/produtoloja/:loja/:id', eAdmin, async (req, res) => {
         .catch(() => {
             return res.status(400).json({
                 erro: true,
-                mensagem: "Erro: Promoção não foi encontrado na loja!",
+                mensagem: "Erro: Produto não foi encontrado na loja!",
             });
         });
 
 
 })
-//apaga promoção
+//apaga/inclui/altera promoção
 router.put('/produtoloja/:loja/:id', eAdmin, async (req, res) => {
-
     const { loja, id } = req.params
-    const dados = req.body
+    const dadosOferta = req.body
     const usuario = Number(req.userId)
-
-    await TabelaLojaProduto.update(dados, { where: { lojaid: loja, produtoid: id, usuario: usuario } })
+    await TabelaLojaProduto.update(dadosOferta, { where: { idLojaVirtual: loja, produtoid: id, usuario: usuario } })
         .then(() => {
-
             return res.json({
                 erro: false,
                 mensagem: "Promoção na loja alterado com sucesso!",
             });
         })
-        .catch(() => {
+        .catch((erro) => {
             return res.status(400).json({
                 erro: true,
                 mensagem: "Erro: Promoção não foi alterada na loja!",
@@ -405,7 +555,6 @@ router.put('/produtoloja/:loja/:id', eAdmin, async (req, res) => {
         });
 
 })
-
 
 router.get('/produtosloja/pesquisa/:loja', eAdmin, async (req, res) => {
     const { pesquisa } = req.params
@@ -462,6 +611,36 @@ router.post('/precifica', eAdmin, async (req, res) => {
     }
 })
 
+//precifica um produto
+router.post('/precificaumproduto/:produtoid/:loja',eAdmin, async (req,res)=>{
+    const usuario = req.userId
+    const apikey = req.apikey
+    const {produtoid, loja}= req.params
+
+    var dadosLoja = await Lojas.findOne({ where: { codigoBling: loja, usuario:usuario } })
+    await Produtos.findOne({where:{ codigo:produtoid ,usuario:usuario}})
+    .then((response)=>{
+        const produtoCompleto = response
+        let parametros = {
+            produto:produtoid,
+            codigoBling:loja,
+            loja:dadosLoja,
+            produtoCompleto : produtoCompleto,
+            usuario : usuario,
+            apikey:apikey
+        }
+        FazUmProduto(parametros)
+        
+    
+        const transfere = {
+            codigoBling:loja
+        }
+        
+    })
+    .catch((erro)=>{console.log("não há produtos"+erro)})
+    await espera(1000)
+
+})
 
 
 module.exports = router

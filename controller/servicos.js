@@ -54,6 +54,4 @@ router.get('/categorias',eAdmin, async (req, res) => {
         });
 })
 
-
-
 module.exports = router

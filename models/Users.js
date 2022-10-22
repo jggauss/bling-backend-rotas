@@ -26,6 +26,9 @@ const Users =  db.define('users',{
     plano: {
         type: Sequelize.STRING
     },
+    recover_password: {
+        type: Sequelize.STRING
+    },
 
 })
 
@@ -39,5 +42,5 @@ const Users =  db.define('users',{
 //db.sync
 //Users.sync({force:true})
 //Verificar se há alguma diferença na tabela e realiza a alteração 
-//User.sync( {alter:true})
+//Users.sync( {alter:true})
 module.exports = Users;

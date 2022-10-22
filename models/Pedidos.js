@@ -11,6 +11,7 @@ const Pedidos = db.define('pedidos', {
     usuario: {
         type: Sequelize.INTEGER,
         allowNull: false,
+        primaryKey: true,
     },
 
     idLojaVirtual: {

@@ -9,13 +9,9 @@ const Categorias = require('../models/Categorias');
 const Marcas = require('../models/Marcas');
 const Lojas = require('../models/Lojas');
 
-const TabelaLojaProduto = require('../models/TabelaLojaProduto');
-const { json } = require('body-parser');
 const espera = require('../services/delay');
-const FazUmProduto = require('../services/fazUmProduto');
-const ProdutoSalva = require('../services/ProdutoSalva');
-const PercorreLojas = require('../services/PercorreLojas');
 const PegaTodosProdutos = require('../services/PegaTodosProdutos');
+const PegaProduto = require('../services/PegaProduto');
 
 router.get('/', (req, res) => {
     return res.send("Página principal api bling")
@@ -299,15 +295,15 @@ router.post("/precifica/selecionado", eAdmin, async (req, res) => {
     const apikey = req.apikey
     const usuario = Number(req.userId)
     var lista = req.body
-    //pegando os produtos selecionados
     const transfere = {
         apikey:apikey,
         usuario:usuario,
         lista:lista
     }
-    await aguarda(transfere)
     
-    async function aguarda(transfere) {
+    await PercorreLista(transfere)
+    
+    async function PercorreLista(transfere) {
         const apikey = transfere.apikey
         const usuario = transfere.usuario
         const lista = transfere.lista
@@ -317,44 +313,10 @@ router.post("/precifica/selecionado", eAdmin, async (req, res) => {
                 usuario : usuario,
                 apikey :apikey
             }
-            await pegaProduto(acesso)
+            await PegaProduto(acesso)
             await espera(1000);
         }
     }
-    //pega no bling e salva o produto
-    async function pegaProduto(acesso) {
-
-        const produto = acesso.produto
-        const usuario = acesso.usuario
-        const apikey = acesso.apikey
-        await espera(1000)
-            await Produtos.findOne({
-                where:{
-                    usuario:usuario,
-                    codigo:produto
-                }
-            })
-            .then((prod) => {
-                const dados10 = {
-                    codigo: prod.codigo,
-                    idBling: prod.idBling,
-                    name: prod.name,
-                    situacao: prod.situacao,
-                    preco: 0,
-                    precoCusto: prod.precoCusto,
-                    marca: prod.marca,
-                    nameCategoria: prod.nameCategoria,
-                    nomeFornecedor: prod.nomeFornecedor,
-                    tipoSimplesComposto:prod.tipoSimplesComposto,
-                    usuario:usuario,
-                    apikey:apikey
-                }
-                ProdutoSalva(dados10)
-                PercorreLojas(dados10)
-            })
-            .catch((error) => { console.log("não deu certo") })
-        res.end()
-    }
-    //pega todas as lojas
+    
 })
 module.exports = router

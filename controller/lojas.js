@@ -74,11 +74,9 @@ router.post('/lojas',eAdmin, async (req, res) => {
 })
 
 router.put('/loja/:id',eAdmin, async (req, res) => {
-
     var { id } = req.params
     const dados = req.body
     const usuario = Number(req.userId)
-
     let schema = yup.object().shape({
         percentAcrescAcimaMinimo: yup.string("Erro. Margem Bruta deve ser preenchida").required("Erro. Margem Bruta deve ser preenchida"),
         comissao: yup.string("Erro. Comissão deve ser entre 0 e 40%").required("Erro. Comissão deve ser entre 0 e 40%"),
@@ -97,7 +95,7 @@ router.put('/loja/:id',eAdmin, async (req, res) => {
     }
 
 
-    await Lojas.update(dados, { where: { id: Number(id), usuario:usuario } })
+    await Lojas.update(dados, { where: { codigoBling: Number(id), usuario:usuario } })
         .then(() => {
             return res.json({
                 erro: false,
