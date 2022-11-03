@@ -2,8 +2,8 @@ const express = require('express');
 var router = express.Router()
 const yup = require("yup");
 const { eAdmin } = require('../middlewares/auth');
-//const { Op } = require("sequelize");
-const Lojas = require('../models/Lojas')
+const Lojas = require('../models/Lojas.js');
+const TabelaLojaProduto = require('../models/TabelaLojaProduto.js');
 
 //criar loja
 router.post('/lojas',eAdmin, async (req, res) => {
@@ -109,22 +109,31 @@ router.put('/loja/:id',eAdmin, async (req, res) => {
             });
         });
 })
-router.delete('/loja/:id',eAdmin, async (req, res) => {
-    const { id } = req.params
+
+//apaga a loja e TODOS OS PRODUTOS E PEDIDOS DA LOJA ***IRRECUPERAVEL
+router.delete('/loja/:codigoBling',eAdmin, async (req, res) => {
+    const { codigoBling } = req.params
     const usuario = Number(req.userId)
-    await Lojas.destroy({ where: { id, usuario:usuario } })
+    await Lojas.destroy({ where: { codigoBling, usuario:usuario } })
         .then(() => {
+        })
+        .catch((err) => {
+        });
+        
+        await TabelaLojaProduto.destroy({ where: { lojaid:codigoBling, usuario:usuario } })
+        .then((response) => {
             return res.json({
                 erro: false,
                 mensagem: "Loja deletada com sucesso!",
             });
         })
-        .catch(() => {
+        .catch((err) => {
             return res.status(400).json({
                 erro: true,
                 mensagem: "Erro: Loja não foi cadastrada com sucesso!",
             });
         });
+
 })
 router.get('/lojas',eAdmin, async (req, res) => {
     const usuario = Number(req.userId)
@@ -208,7 +217,7 @@ router.get('/loja/:id',eAdmin, async (req, res) => {
 
 })
 
-
+//dados da loja pelo código bling da loja e usuário
 router.get('/lojabling/:id',eAdmin, async (req, res) => {
     const { id } = req.params
     const usuario = Number(req.userId)

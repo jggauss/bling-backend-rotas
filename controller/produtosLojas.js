@@ -39,7 +39,6 @@ router.post('/precificaloja/:id', eAdmin, async (req, res) => {
 //envia o preço de um produtos para uma determinada loja
 
 router.put('/enviaumproduto/:id/:loja', eAdmin, async (req, res) => {
-    console.log("cheguei aqui")
     const { id, loja } = req.params
     const usuario = req.userId
     const apikey = req.apikey
@@ -48,14 +47,13 @@ router.put('/enviaumproduto/:id/:loja', eAdmin, async (req, res) => {
         await axios.put(transporta.urlPost, transporta.body, transporta.headerBling)
             .then((response) => { "deu certo " + response.data })
             .catch((erro) => { console.log("de errado  ===== " + erro) })
-        res.end()
-
+            res.end()
+            
     }
 
     await TabelaLojaProduto.findOne({ where: { produtoid: id, idLojaVirtual: loja, usuario: usuario } })
         .then((produto) => {
-            console.log("a bosta do produto")
-            console.log(produto)
+
             let entrada = `<?xml version="1.0" encoding="UTF-8"?><produtosLoja><produtoLoja><idLojaVirtual>${produto.idProdutoLoja}</idLojaVirtual><preco><preco>${(produto.precoVenda)}</preco><precoPromocional>${produto.precoOferta}</precoPromocional></preco></produtoLoja></produtosLoja>`
             const headerBling = {
                 headers: {
@@ -73,6 +71,7 @@ router.put('/enviaumproduto/:id/:loja', eAdmin, async (req, res) => {
             enviaProdutoBling(transporta)
         })
         .catch(() => { })
+        res.end()
 })
 //pega todos os produtos por loja
 router.get('/produtosloja/:page/:loja/:marca/:tipo/:promocao/:situacao/:desconto', eAdmin, async (req, res) => {
@@ -532,6 +531,7 @@ router.get('/produtoloja/:loja/:id/:name', eAdmin, async (req, res) => {
                 mensagem: "Erro: Produto não foi encontrado na loja!",
             });
         });
+        res.end()
 
 
 })
@@ -542,17 +542,18 @@ router.put('/produtoloja/:loja/:id', eAdmin, async (req, res) => {
     const usuario = Number(req.userId)
     await TabelaLojaProduto.update(dadosOferta, { where: { idLojaVirtual: loja, produtoid: id, usuario: usuario } })
         .then(() => {
-            return res.json({
-                erro: false,
-                mensagem: "Promoção na loja alterado com sucesso!",
-            });
+            // return res.json({
+            //     erro: false,
+            //     mensagem: "Promoção na loja alterado com sucesso!",
+            // });
         })
         .catch((erro) => {
-            return res.status(400).json({
-                erro: true,
-                mensagem: "Erro: Promoção não foi alterada na loja!",
-            });
+             return res.status(400).json({
+                 erro: true,
+                 mensagem: "Erro: Promoção não foi alterada na loja!",
+             });
         });
+        res.end()
 
 })
 
@@ -639,8 +640,24 @@ router.post('/precificaumproduto/:produtoid/:loja',eAdmin, async (req,res)=>{
     })
     .catch((erro)=>{console.log("não há produtos"+erro)})
     await espera(1000)
+    res.end()
 
 })
 
-
+router.post('/precificalojaconta/:loja',eAdmin, async (req,res)=>{
+    await espera(100)
+    const apikey = req.apikey
+    const usuario = req.userId
+    
+    const parametros = {
+        apikey:apikey,
+        usuario:usuario,
+        produto:req.body.produto,
+        codigoBling:req.body.codigoBling,
+        loja:req.body.loja,
+        produtoCompleto:req.body.produtoCompleto
+    }
+    retorno =await FazUmProduto(parametros)
+    res.json(retorno)
+})
 module.exports = router

@@ -19,11 +19,13 @@ async function PegaTodosProdutos(acesso) {
         if (sit === 1) situacao = "I"
 
         for (var i = 1; i < 100; i++) {
+            await espera(3000)
 
             const urlPegaTodosProdutos = `https://bling.com.br/Api/v2/produtos/page=${i}/json/&filters=situacao[${situacao}]/&apikey=${apikey}`
             await axios.get(urlPegaTodosProdutos)
                 .then((response) => {
                     todosProdutos = response.data.retorno.produtos
+
                     tamanho = todosProdutos.length
                     todosProdutos.map(async (produto) => {
                         const existe = await Produtos.findOne({
@@ -32,6 +34,7 @@ async function PegaTodosProdutos(acesso) {
                                 usuario: usuario
                             }
                         })
+                       
                         produto.produto.estrutura ? simplesComposto = "Composto" : simplesComposto = "Simples"
                         const dadosMarca = {
                             marca: produto.produto.marca,
@@ -41,6 +44,7 @@ async function PegaTodosProdutos(acesso) {
                             nameCategoria: produto.produto.categoria.descricao,
                             usuario: usuario
                         }
+                        
                         const dados = {
                             codigo: produto.produto.codigo,
                             idBling: produto.produto.id,
@@ -55,12 +59,16 @@ async function PegaTodosProdutos(acesso) {
                             usuario: usuario
 
                         }
+                        
                         if (!existe) {
                             await Produtos.create(dados)
-                                .then(() => { })
+                                .then(() => { 
+                                })
                                 .catch(() => { })
                             await Categorias.create(dadosCategoria)
-                                .then(() => {})
+                                .then(() => {
+                                    
+                                })
                                 .catch(() => { })
                             await Marcas.create(dadosMarca)
                                 .then(() => {})
@@ -84,10 +92,9 @@ async function PegaTodosProdutos(acesso) {
                     })
                 })
                 .catch(() => {
-
                 })
 
-            await espera(3000)
+            
 
             if (tamanho < 99) { console.log("Processo finalizado") }
             if (tamanho < 99) { break }
@@ -109,7 +116,7 @@ async function PegaTodosProdutos(acesso) {
         //         });
         //     })
     }
-
+    console.log("Processo finalizado")
 }
 
 

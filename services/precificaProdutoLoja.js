@@ -22,7 +22,7 @@ async function PrecificaProdutoLoja(transfere) {
             apikey:apikey
         }
         FazUmProduto(parametros)
-        await espera(1000);
+        await espera(350);
     }
 }
 

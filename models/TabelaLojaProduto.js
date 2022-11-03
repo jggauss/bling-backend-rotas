@@ -88,7 +88,7 @@ TabelaLojaProduto.associate = function(models){
 }
 
 //Criar a tabela
-//db.sync
+db.sync
 //TabelaLojaProduto.sync({force:true})
 //Verificar se há alguma diferença na tabela e realiza a alteração 
 //TabelaLojaProduto.sync( {alter:true})

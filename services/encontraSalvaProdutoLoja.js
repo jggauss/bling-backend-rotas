@@ -5,6 +5,7 @@ const enviaProdutoBling = require("./enviaProdutoBling")
 const montaUrlSalvarBling = require("./montaUrlSalvarBling")
 
 async function EncontraSalvaProdutoLoja(tranportaDados) {
+    
     const usuario = tranportaDados.usuario
     var dadosProduto = tranportaDados.dadosProduto
     const apikey = tranportaDados.apikey
@@ -34,6 +35,7 @@ async function EncontraSalvaProdutoLoja(tranportaDados) {
 
         await enviaProdutoBling(trans)
     }
+    
 }
 
 module.exports = EncontraSalvaProdutoLoja
