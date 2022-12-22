@@ -1,0 +1,11 @@
+
+npm i bcrypt
+npm i sequelize
+npm i jwt
+npm i react-router-dom
+npm i axios	
+npm i cors
+npm i path
+npm i dotenv
+
+Rodar na porta 3000 com npm start
